@@ -1,7 +1,7 @@
 # Личный проект «Менеджер задач» [![Build status][travis-image]][travis-url]
 
-* Студент: [Константин Суриков](https://up.htmlacademy.ru/ecmascript/9/user/598165).
-* Наставник: `Неизвестно`.
+- Студент: [Константин Суриков](https://up.htmlacademy.ru/ecmascript/9/user/598165).
+- Наставник: `Без наставника`.
 
 ---
 
