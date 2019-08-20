@@ -1,15 +1,17 @@
 import {getMenuMarkup} from './components/menu';
 import {getSearchMarkup} from './components/search';
 import {getMainFiltersMarkup} from './components/main-filters';
-import {getBoardFiltersMarkup} from './components/board-filters';
+import {getBoardSectionMarkup} from './components/board-section';
 import {getCardMarkup} from './components/card';
 import {getCardEditMarkup} from './components/card-edit';
-import {getLoadMoreButtonMarkup} from './components/load-more-button';
+import {getTasks} from './data';
+
+const TASKS_PER_CLICK = 8;
+const tasks = getTasks();
 
 const mainSection = document.querySelector(`.main`);
 const controlSection = document.querySelector(`.control`);
-const boardSection = document.createElement(`section`);
-const boardTasks = document.createElement(`div`);
+let tasksHaveBeenShown = 0;
 
 const renderComponent = (container, template) => {
   const component = document.createElement(`template`);
@@ -17,24 +19,31 @@ const renderComponent = (container, template) => {
   container.appendChild(component.content);
 };
 
-
 renderComponent(controlSection, getMenuMarkup());
 renderComponent(mainSection, getSearchMarkup());
-renderComponent(mainSection, getMainFiltersMarkup());
+renderComponent(mainSection, getMainFiltersMarkup(tasks));
+renderComponent(mainSection, getBoardSectionMarkup());
 
-boardSection.classList.add(`board`, `container`);
-renderComponent(boardSection, getBoardFiltersMarkup());
+const getTasksMarkup = (index) => {
+  return tasks.slice(index, index + TASKS_PER_CLICK).map((task, i) => {
+    return i || tasksHaveBeenShown ? getCardMarkup(task) : getCardEditMarkup(task);
+  }).join(``);
+};
 
-boardTasks.classList.add(`board__tasks`);
+let tasksMarkup = getTasksMarkup(tasksHaveBeenShown);
+tasksHaveBeenShown = tasksHaveBeenShown + TASKS_PER_CLICK;
 
-renderComponent(boardTasks, getCardEditMarkup());
+const boardTasks = document.querySelector(`.board__tasks`);
+renderComponent(boardTasks, tasksMarkup);
 
-for (let i = 0; i < 3; i++) {
-  renderComponent(boardTasks, getCardMarkup());
-}
+const loadMoreButton = document.querySelector(`.load-more`);
 
-boardSection.append(boardTasks);
+loadMoreButton.addEventListener(`click`, () => {
+  tasksMarkup = getTasksMarkup(tasksHaveBeenShown);
+  tasksHaveBeenShown = tasksHaveBeenShown + TASKS_PER_CLICK;
+  renderComponent(boardTasks, tasksMarkup);
 
-mainSection.append(boardSection);
-renderComponent(boardSection, getLoadMoreButtonMarkup());
-
+  if (tasksHaveBeenShown >= tasks.length) {
+    document.querySelector(`.board`).removeChild(loadMoreButton);
+  }
+});
