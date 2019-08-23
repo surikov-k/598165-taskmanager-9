@@ -1,4 +1,5 @@
-const COLORS_LIST = [`black`, `yellow`, `blue`, `green`, `pink`];
+export const COLORS_LIST = [`black`, `yellow`, `blue`, `green`, `pink`];
+
 const DESCRIPTIONS_LIST = [
   `Изучить теорию`,
   `Сделать домашку`,
@@ -7,7 +8,7 @@ const DESCRIPTIONS_LIST = [
 const TAGS_LIST = [`homework`, `theory`, `practice`, `intensive`, `keks`];
 const TAGS_MIN = 0;
 const TAGS_MAX = 3;
-const TASKS_COUNT = 22;
+const TASKS_COUNT = Math.round(Math.random() * 15 + 10);
 
 const getRandomFromArray = (array) => {
   const index = Math.floor(Math.random() * array.length);
