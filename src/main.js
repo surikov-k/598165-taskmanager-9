@@ -4,17 +4,20 @@ import {getMainFiltersMarkup} from './components/main-filters';
 import {getBoardSectionMarkup} from './components/board-section';
 import Card from './components/card';
 import CardEdit from './components/card-edit';
+import NoTask from './components/no-task';
 import {getTasks} from './data';
-import {render} from './utils';
+import {render, Position} from './utils';
+import BoardFilters from './components/board-filters';
+import LoadMoreButton from './components/load-more-button';
 
 const TASKS_PER_CLICK = 8;
 const initalState = {
-  tasksHaveDisplayed: 0
+  tasksHaveDisplayed: 0,
+  tasks: []
 };
 
 const state = Object.assign({}, initalState);
-
-const tasks = getTasks();
+state.tasks = getTasks();
 
 const mainSection = document.querySelector(`.main`);
 const controlSection = document.querySelector(`.control`);
@@ -27,8 +30,10 @@ const renderComponent = (container, template) => {
 
 renderComponent(controlSection, getMenuMarkup());
 renderComponent(mainSection, getSearchMarkup());
-renderComponent(mainSection, getMainFiltersMarkup(tasks));
+renderComponent(mainSection, getMainFiltersMarkup(state.tasks));
 renderComponent(mainSection, getBoardSectionMarkup());
+
+const boardContainer = document.querySelector(`.board`);
 
 const renderCard = (task) => {
   const card = new Card(task);
@@ -72,21 +77,29 @@ const renderCard = (task) => {
 };
 
 const renderCards = () => {
-  tasks.slice(state.tasksHaveDisplayed, state.tasksHaveDisplayed + TASKS_PER_CLICK).forEach((task) => {
+  state.tasks.slice(state.tasksHaveDisplayed, state.tasksHaveDisplayed + TASKS_PER_CLICK).forEach((task) => {
     renderCard(task);
   });
   state.tasksHaveDisplayed += TASKS_PER_CLICK;
 };
 
 const cardsContainer = document.querySelector(`.board__tasks`);
-renderCards();
 
-const loadMoreButton = document.querySelector(`.load-more`);
-
-loadMoreButton.addEventListener(`click`, () => {
+if (state.tasks.length) {
+  render(boardContainer, new BoardFilters().getElement(), Position.AFTERBEGING);
   renderCards();
+  const loadMoreButton = new LoadMoreButton();
+  render(boardContainer, loadMoreButton.getElement());
+  loadMoreButton
+    .getElement()
+    .addEventListener(`click`, () => {
+      renderCards();
 
-  if (state.tasksHaveDisplayed >= tasks.length) {
-    document.querySelector(`.board`).removeChild(loadMoreButton);
-  }
-});
+      if (state.tasksHaveDisplayed >= state.tasks.length) {
+        loadMoreButton.unrender();
+      }
+    });
+} else {
+  render(boardContainer, new NoTask().getElement(), Position.AFTERBEGING);
+}
+
