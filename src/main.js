@@ -2,16 +2,22 @@ import {getMenuMarkup} from './components/menu';
 import {getSearchMarkup} from './components/search';
 import {getMainFiltersMarkup} from './components/main-filters';
 import {getBoardSectionMarkup} from './components/board-section';
-import {getCardMarkup} from './components/card';
-import {getCardEditMarkup} from './components/card-edit';
+import Card from './components/card';
+import CardEdit from './components/card-edit';
 import {getTasks} from './data';
+import {render} from './utils';
 
 const TASKS_PER_CLICK = 8;
+const initalState = {
+  tasksHaveDisplayed: 0
+};
+
+const state = Object.assign({}, initalState);
+
 const tasks = getTasks();
 
 const mainSection = document.querySelector(`.main`);
 const controlSection = document.querySelector(`.control`);
-let tasksHaveBeenShown = 0;
 
 const renderComponent = (container, template) => {
   const component = document.createElement(`template`);
@@ -24,26 +30,63 @@ renderComponent(mainSection, getSearchMarkup());
 renderComponent(mainSection, getMainFiltersMarkup(tasks));
 renderComponent(mainSection, getBoardSectionMarkup());
 
-const getTasksMarkup = (index) => {
-  return tasks.slice(index, index + TASKS_PER_CLICK).map((task, i) => {
-    return i || tasksHaveBeenShown ? getCardMarkup(task) : getCardEditMarkup(task);
-  }).join(``);
+const renderCard = (task) => {
+  const card = new Card(task);
+  const cardEdit = new CardEdit(task);
+
+  const escKeyDownHandler = (evt) => {
+    if (evt.key === `Escape` || evt.key === `Esc`) {
+      cardsContainer.replaceChild(card.getElement(), cardEdit.getElement());
+      document.removeEventListener(`keydown`, escKeyDownHandler);
+    }
+  };
+
+  card.getElement()
+    .querySelector(`.card__btn--edit`)
+    .addEventListener(`click`, () => {
+      cardsContainer.replaceChild(cardEdit.getElement(), card.getElement());
+      document.addEventListener(`keydown`, escKeyDownHandler);
+    });
+
+  cardEdit.getElement()
+    .querySelector(`textarea`)
+    .addEventListener(`focus`, () => {
+      document.removeEventListener(`keydown`, escKeyDownHandler);
+    });
+
+  cardEdit.getElement()
+    .querySelector(`textarea`)
+    .addEventListener(`blur`, () => {
+      document.addEventListener(`keydown`, escKeyDownHandler);
+    });
+
+  cardEdit.getElement()
+    .querySelector(`.card__save`)
+    .addEventListener(`click`, (evt) => {
+      evt.preventDefault();
+      cardsContainer.replaceChild(card.getElement(), cardEdit.getElement());
+      document.removeEventListener(`keydown`, escKeyDownHandler);
+    });
+
+  render(cardsContainer, card.getElement());
 };
 
-let tasksMarkup = getTasksMarkup(tasksHaveBeenShown);
-tasksHaveBeenShown = tasksHaveBeenShown + TASKS_PER_CLICK;
+const renderCards = () => {
+  tasks.slice(state.tasksHaveDisplayed, state.tasksHaveDisplayed + TASKS_PER_CLICK).forEach((task) => {
+    renderCard(task);
+  });
+  state.tasksHaveDisplayed += TASKS_PER_CLICK;
+};
 
-const boardTasks = document.querySelector(`.board__tasks`);
-renderComponent(boardTasks, tasksMarkup);
+const cardsContainer = document.querySelector(`.board__tasks`);
+renderCards();
 
 const loadMoreButton = document.querySelector(`.load-more`);
 
 loadMoreButton.addEventListener(`click`, () => {
-  tasksMarkup = getTasksMarkup(tasksHaveBeenShown);
-  tasksHaveBeenShown = tasksHaveBeenShown + TASKS_PER_CLICK;
-  renderComponent(boardTasks, tasksMarkup);
+  renderCards();
 
-  if (tasksHaveBeenShown >= tasks.length) {
+  if (state.tasksHaveDisplayed >= tasks.length) {
     document.querySelector(`.board`).removeChild(loadMoreButton);
   }
 });
