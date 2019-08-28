@@ -1,21 +1,13 @@
+import AbstractComponent from './abstract-component';
 import {COLORS_LIST} from '../data';
-import {createElement} from '../utils';
-export default class CardEdit {
+export default class CardEdit extends AbstractComponent {
   constructor({description, dueDate, repeatingDays, tags, color}) {
+    super();
     this._description = description;
     this._dueDate = dueDate;
     this._repeatingDays = repeatingDays;
     this._tags = tags;
     this._color = color;
-    this._element = null;
-  }
-
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
   }
 
   getTemplate() {

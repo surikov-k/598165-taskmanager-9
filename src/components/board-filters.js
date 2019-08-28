@@ -1,16 +1,10 @@
-import {createElement} from "../utils";
+import AbstractComponent from "./abstract-component";
 
-export default class BoardFilters {
+export default class BoardFilters extends AbstractComponent {
   constructor() {
-    this._element = null;
+    super();
   }
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
 
-    return this._element;
-  }
 
   getTemplate() {
     return `<div class="board__filter-list">
