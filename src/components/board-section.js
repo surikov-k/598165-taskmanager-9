@@ -1,5 +1,7 @@
-export const getBoardSectionMarkup = () => {
-  return `<section class="board container">
-              <div class="board__tasks"></div>
-          </section>`;
-};
+import AbstractComponent from "./abstract-component";
+
+export default class BoardSection extends AbstractComponent {
+  getTemplate() {
+    return `<section class="board container"></section>`;
+  }
+}

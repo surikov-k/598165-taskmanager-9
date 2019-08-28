@@ -53,7 +53,8 @@ export const getFilters = (tasks) => {
   return [
     {
       name: `All`,
-      count: tasks.length
+      count: tasks.length,
+      checked: true
     },
     {
       name: `Overdue`,
@@ -63,7 +64,8 @@ export const getFilters = (tasks) => {
         today.setHours(0, 0, 0, 0);
         dueDate.setHours(0, 0, 0, 0);
         return today > dueDate;
-      }).length
+      }).length,
+      checked: false
     },
     {
       name: `Today`,
@@ -73,25 +75,30 @@ export const getFilters = (tasks) => {
         today.setHours(0, 0, 0, 0);
         dueDate.setHours(0, 0, 0, 0);
         return today === dueDate;
-      }).length
+      }).length,
+      checked: false
     },
     {
       name: `Favorites`,
-      count: tasks.filter((task) => task.isFavorite).length
+      count: tasks.filter((task) => task.isFavorite).length,
+      checked: false
     },
     {
       name: `Repeating`,
       count: tasks.filter((task) => {
         return Object.keys(task.repeatingDays).some((day) => task.repeatingDays[day]);
-      }).length
+      }).length,
+      checked: false
     },
     {
       name: `Tags`,
-      count: tasks.filter((task) => task.tags.size).length
+      count: tasks.filter((task) => task.tags.size).length,
+      checked: false
     },
     {
       name: `Archive`,
-      count: tasks.filter((task) => task.isArchive).length
+      count: tasks.filter((task) => task.isArchive).length,
+      checked: false
     },
   ];
 };
