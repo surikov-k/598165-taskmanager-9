@@ -15,6 +15,9 @@ export default class BoardConroller {
     this._tasks = tasks;
     this._boardSection = new BoardSection();
     this._boardTasks = new BoardTasks();
+    this._boardFilters = new BoardFilters();
+    this._loadMoreButton = new LoadMoreButton();
+    this._noTask = new NoTask();
     this._tasksHaveDisplayed = 0;
   }
 
@@ -23,25 +26,31 @@ export default class BoardConroller {
     render(this._boardSection.getElement(), this._boardTasks.getElement());
 
     if (this._tasks.length) {
-      render(this._boardSection.getElement(), new BoardFilters().getElement(), Position.AFTERBEGING);
-      this._renderCards();
+      render(this._boardSection.getElement(), this._boardFilters.getElement(), Position.AFTERBEGING);
 
-      const loadMoreButton = new LoadMoreButton();
-      render(this._boardSection.getElement(), loadMoreButton.getElement());
+      this._boardFilters
+        .getElement()
+        .addEventListener(`click`, (evt) => this._onBoardFiltersLinkClick(evt));
 
-      loadMoreButton
+      this._tasksHaveDisplayed += TASKS_PER_CLICK;
+      this._renderCards(this._boardFilters.current);
+
+
+      render(this._boardSection.getElement(), this._loadMoreButton.getElement());
+
+      this._loadMoreButton
         .getElement()
         .addEventListener(`click`, () => {
-          this._renderCards();
+          this._tasksHaveDisplayed += TASKS_PER_CLICK;
+          this._renderCards(this._boardFilters.current);
 
           if (this._tasksHaveDisplayed >= this._tasks.length) {
-            loadMoreButton.unrender();
+            this._loadMoreButton.unrender();
           }
         });
     } else {
-      render(this._boardSection.getElement(), new NoTask().getElement(), Position.AFTERBEGING);
+      render(this._boardSection.getElement(), this._noTask.getElement(), Position.AFTERBEGING);
     }
-
   }
 
   _renderCard(task) {
@@ -91,11 +100,40 @@ export default class BoardConroller {
     render(this._boardTasks.getElement(), card.getElement());
   }
 
-  _renderCards() {
-    this._tasks.slice(this._tasksHaveDisplayed, this._tasksHaveDisplayed + TASKS_PER_CLICK).forEach((task) => {
-      this._renderCard(task);
-    });
-    this._tasksHaveDisplayed += TASKS_PER_CLICK;
+  _renderCards(filter) {
+    let tasksToRender = [];
+    this._boardTasks.getElement().innerHTML = ``;
+
+    switch (filter) {
+      case `date-up`:
+        tasksToRender = this._tasks.slice()
+          .sort((a, b) => {
+            return a.dueDate - b.dueDate;
+          });
+        break;
+      case `date-down`:
+        tasksToRender = this._tasks.slice()
+          .sort((a, b) => {
+            return b.dueDate - a.dueDate;
+          });
+        break;
+      case `default`:
+        tasksToRender = this._tasks;
+        break;
+    }
+
+    tasksToRender
+      .slice(0, this._tasksHaveDisplayed)
+      .forEach((task) => {
+        this._renderCard(task);
+      });
+  }
+
+  _onBoardFiltersLinkClick(evt) {
+    evt.preventDefault();
+    if (evt.target.tagName === `A`) {
+      this._boardFilters.current = evt.target.dataset.sortType;
+      this._renderCards(this._boardFilters.current);
+    }
   }
 }
-
