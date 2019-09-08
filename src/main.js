@@ -3,7 +3,7 @@ import Search from './components/search';
 import MainFilter from './components/main-filters';
 import {getTasks, getFilters} from './data';
 import {render} from './utils';
-import BoardConroller from './components/board-controller';
+import BoardConroller from './controllers/board-controller';
 
 export const TASKS_PER_CLICK = 8;
 

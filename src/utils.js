@@ -19,3 +19,7 @@ export const render = (container, element, position = Position.BEFOREEND) => {
       break;
   }
 };
+
+export const unrender = (element) => {
+  element.remove();
+};
