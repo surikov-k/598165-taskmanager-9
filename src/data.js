@@ -39,8 +39,8 @@ const makeTask = () => {
     },
     tags: new Set(createTags()),
     color: getRandomFromArray(COLORS_LIST),
-    isFavorite: Boolean(Math.round(Math.random())),
-    isArchive: Boolean(Math.round(Math.random())),
+    isFavorite: false,
+    isArchive: false,
   };
 };
 

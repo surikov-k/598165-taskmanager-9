@@ -1,13 +1,12 @@
-import BoardSection from "./board-section";
-import BoardTasks from "./board-tasks";
+import BoardSection from "../components/board-section";
+import BoardTasks from "../components/board-tasks";
 import {render, Position} from "../utils";
-import Card from "./card";
-import CardEdit from "./card-edit";
-import BoardFilters from "./board-filters";
-import LoadMoreButton from "./load-more-button";
-import NoTask from "./no-task";
+import BoardFilters from "../components/board-filters";
+import LoadMoreButton from "../components/load-more-button";
+import NoTask from "../components/no-task";
 
 import {TASKS_PER_CLICK} from "../main";
+import CardController from "./card";
 
 export default class BoardConroller {
   constructor(container, tasks) {
@@ -19,6 +18,10 @@ export default class BoardConroller {
     this._loadMoreButton = new LoadMoreButton();
     this._noTask = new NoTask();
     this._tasksHaveDisplayed = 0;
+
+    this._subscriptions = [];
+    this._onDataChange = this._onDataChange.bind(this);
+    this._onViewChange = this._onViewChange.bind(this);
   }
 
   init() {
@@ -53,51 +56,9 @@ export default class BoardConroller {
     }
   }
 
-  _renderCard(task) {
-    const card = new Card(task);
-    const cardEdit = new CardEdit(task);
-
-    const escKeyDownHandler = (evt) => {
-      if (evt.key === `Escape` || evt.key === `Esc`) {
-        this._boardTasks
-          .getElement()
-          .replaceChild(card.getElement(), cardEdit.getElement());
-        document.removeEventListener(`keydown`, escKeyDownHandler);
-      }
-    };
-
-    card.getElement()
-      .querySelector(`.card__btn--edit`)
-      .addEventListener(`click`, () => {
-        this._boardTasks
-          .getElement()
-          .replaceChild(cardEdit.getElement(), card.getElement());
-        document.addEventListener(`keydown`, escKeyDownHandler);
-      });
-
-    cardEdit.getElement()
-      .querySelector(`textarea`)
-      .addEventListener(`focus`, () => {
-        document.removeEventListener(`keydown`, escKeyDownHandler);
-      });
-
-    cardEdit.getElement()
-      .querySelector(`textarea`)
-      .addEventListener(`blur`, () => {
-        document.addEventListener(`keydown`, escKeyDownHandler);
-      });
-
-    cardEdit.getElement()
-      .querySelector(`.card__save`)
-      .addEventListener(`click`, (evt) => {
-        evt.preventDefault();
-        this._boardTasks
-          .getElement()
-          .replaceChild(card.getElement(), cardEdit.getElement());
-        document.removeEventListener(`keydown`, escKeyDownHandler);
-      });
-
-    render(this._boardTasks.getElement(), card.getElement());
+  _renderCard(data) {
+    const cardController = new CardController(this._boardTasks, data, this._onDataChange, this._onViewChange);
+    this._subscriptions.push(cardController.setDefaultView.bind(cardController));
   }
 
   _renderCards(filter) {
@@ -133,6 +94,19 @@ export default class BoardConroller {
     evt.preventDefault();
     if (evt.target.tagName === `A`) {
       this._boardFilters.current = evt.target.dataset.sortType;
+      this._renderCards(this._boardFilters.current);
+    }
+  }
+
+  _onViewChange() {
+    this._subscriptions.forEach((subscripiton) => subscripiton());
+  }
+
+  _onDataChange(newData, oldData, isRerenderNecassery = true) {
+    const idx = this._tasks.findIndex((it) => it === oldData);
+    this._tasks[idx] = newData;
+
+    if (isRerenderNecassery) {
       this._renderCards(this._boardFilters.current);
     }
   }

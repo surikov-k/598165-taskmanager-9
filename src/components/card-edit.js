@@ -1,13 +1,17 @@
 import AbstractComponent from './abstract-component';
 import {COLORS_LIST} from '../data';
 export default class CardEdit extends AbstractComponent {
-  constructor({description, dueDate, repeatingDays, tags, color}) {
+  constructor({description, dueDate, repeatingDays, tags, color, isFavorite, isArchive}) {
     super();
     this._description = description;
     this._dueDate = dueDate;
     this._repeatingDays = repeatingDays;
     this._tags = tags;
     this._color = color;
+    this._isFavorite = isFavorite;
+    this._isArchive = isArchive;
+
+    this._subscribeOnEvents();
   }
 
   getTemplate() {
@@ -15,12 +19,16 @@ export default class CardEdit extends AbstractComponent {
       <form class="card__form" method="get">
         <div class="card__inner">
           <div class="card__control">
-            <button type="button" class="card__btn card__btn--archive">
+            <button type="button"
+              class="card__btn
+              card__btn--archive
+              ${this._isArchive ? `` : `card__btn--disabled`}">
               archive
             </button>
             <button
               type="button"
-              class="card__btn card__btn--favorites card__btn--disabled"
+              class="card__btn card__btn--favorites
+              ${this._isFavorite ? `` : `card__btn--disabled`}"
             >
               favorites
             </button>
@@ -46,10 +54,12 @@ export default class CardEdit extends AbstractComponent {
             <div class="card__details">
               <div class="card__dates">
                 <button class="card__date-deadline-toggle" type="button">
-                  date: <span class="card__date-status">no</span>
+                  date: <span class="card__date-status">
+                    ${this._setDateStatus()}
+                    </span>
                 </button>
 
-                <fieldset class="card__date-deadline" ${this._isRepeating() ? `disabled` : ``}>
+                <fieldset class="card__date-deadline" ${this._isRepeating() || !this._dueDate ? `disabled` : ``}>
                   <label class="card__input-deadline-wrap">
                     <input
                       class="card__date"
@@ -57,13 +67,13 @@ export default class CardEdit extends AbstractComponent {
 
                       placeholder="23 September"
                       name="date"
-                      value="${new Date(this._dueDate).toDateString()}"
+                      value="${this._dueDate ? new Date(this._dueDate).toDateString() : ``}"
                     />
                   </label>
                 </fieldset>
 
                 <button class="card__repeat-toggle" type="button">
-                  repeat:<span class="card__repeat-status">${this._isRepeating() ? `no` : ``}</span>
+                  repeat:<span class="card__repeat-status">${this._isRepeating() ? `yes` : `no`}</span>
                 </button>
 
                 <fieldset class="card__repeat-days" ${!this._isRepeating() ? `disabled` : ``}>
@@ -75,7 +85,7 @@ export default class CardEdit extends AbstractComponent {
 
               <div class="card__hashtag">
                 <div class="card__hashtag-list">
-                ${this._getHashTagsTemplate()}
+                ${this._getHashtagsTemplate()}
                 </div>
 
                 <label>
@@ -126,6 +136,10 @@ export default class CardEdit extends AbstractComponent {
     }).join(``);
   }
 
+  _setDateStatus() {
+    return this._isRepeating() || !this._dueDate ? `no` : `yes`;
+  }
+
   _getColorsTemplate() {
     return COLORS_LIST.map((color) => {
       return `<input
@@ -144,10 +158,10 @@ export default class CardEdit extends AbstractComponent {
     }).join(``);
   }
 
-  _getHashTagsTemplate() {
+  _getHashtagsTemplate() {
     return [...this._tags].map((tag) => {
       return `<span class="card__hashtag-inner">
-        <input type="hidden" name="hashtag" value="repeat" class="card__hashtag-hidden-input">
+        <input type="hidden" name="hashtag" value="${tag}" class="card__hashtag-hidden-input">
         <p class="card__hashtag-name">
           #${tag}
         </p>
@@ -156,6 +170,150 @@ export default class CardEdit extends AbstractComponent {
         </button>
       </span>`;
     }).join(``);
+  }
+
+  _subscribeOnEvents() {
+    this._onHastagInputKeydown();
+    this._onColorsWrapClick();
+    this._onDateDeadlineToggleClick();
+    this._onRepeatToggleClick();
+    this._onHashtagDeleteClick();
+  }
+
+  _onHastagInputKeydown() {
+    this.getElement(`.card__hashtag-input`)
+      .addEventListener(`keydown`, (evt) => {
+        if (evt.key === `Enter`) {
+          evt.preventDefault();
+        }
+        if (evt.key === ` `) {
+          const hashTagTemplate =
+            `<span class="card__hashtag-inner">
+            <input type="hidden"
+            name="hashtag"
+            value="${evt.target.value}"
+            class="card__hashtag-hidden-input">
+            <p class="card__hashtag-name">
+              #${evt.target.value}
+            </p>
+            <button type="button" class="card__hashtag-delete">
+              delete
+            </button>
+          </span>`;
+
+          this.getElement()
+            .querySelector(`.card__hashtag-list`)
+            .insertAdjacentHTML(`beforeend`, hashTagTemplate);
+
+          evt.target.value = ``;
+        }
+      });
+  }
+
+  _onColorsWrapClick() {
+    this.getElement()
+      .querySelector(`.card__colors-wrap`)
+      .addEventListener(`click`, (evt) => {
+        if (evt.target.tagName === `INPUT`) {
+
+          [`black`, `yellow`, `blue`, `green`, `pink`]
+            .forEach((color) => {
+              this.getElement()
+                .classList
+                .remove(`card--${color}`);
+            });
+
+          this.getElement()
+            .classList
+            .add(`card--${evt.target.value}`);
+        }
+      });
+  }
+
+  _onDateDeadlineToggleClick() {
+    const dateDeadlineFieldset = this.getElement().querySelector(`.card__date-deadline`);
+    const dateInput = this.getElement().querySelector(`.card__date`);
+    const dateStatus = this.getElement().querySelector(`.card__date-status`);
+
+    this.getElement()
+      .querySelector(`.card__date-deadline-toggle`)
+      .addEventListener(`click`, () => {
+        if (!this._isRepeating()) {
+
+          dateDeadlineFieldset.disabled = !dateDeadlineFieldset.disabled;
+
+          if (!dateDeadlineFieldset.disabled) {
+            dateStatus.innerText = `yes`;
+
+          } else {
+            dateStatus.innerText = `no`;
+            dateInput.value = ``;
+          }
+        }
+      });
+  }
+
+
+  _onRepeatToggleClick() {
+    const repeatStatus = this.getElement().querySelector(`.card__repeat-status`);
+    const repeatDaysFieldset = this.getElement().querySelector(`.card__repeat-days`);
+
+    this.getElement()
+      .querySelector(`.card__repeat-toggle`)
+      .addEventListener(`click`, () => {
+
+        repeatDaysFieldset.disabled = !repeatDaysFieldset.disabled;
+
+        if (!repeatDaysFieldset.disabled) {
+          repeatStatus.innerText = `yes`;
+
+          repeatDaysFieldset
+            .querySelectorAll(`.card__repeat-day-input`)
+            .forEach((input) => {
+              input
+                .addEventListener(`click`, () => {
+                  const dateInput = this.getElement()
+                    .querySelector(`.card__date`);
+                  const dateStatus = this.getElement()
+                    .querySelector(`.card__date-status`);
+                  const dateDeadlineFieldset = this.getElement()
+                    .querySelector(`.card__date-deadline`);
+
+
+                  dateStatus.innerText = `no`;
+                  dateInput.value = ``;
+                  dateDeadlineFieldset.disabled = true;
+                  this.getElement().classList.add(`card--repeat`);
+
+                });
+            });
+        } else {
+          repeatStatus.innerText = `no`;
+          this.getElement().classList.remove(`card--repeat`);
+
+
+          Object.keys(this._repeatingDays).forEach((key) => {
+            this._repeatingDays[key] = false;
+          });
+
+          repeatDaysFieldset
+            .querySelectorAll(`.card__repeat-day-input`)
+            .forEach((input) => {
+              input.checked = false;
+            });
+        }
+      });
+  }
+
+  _onHashtagDeleteClick() {
+    const hashtagList = this.getElement()
+      .querySelector(`.card__hashtag-list`);
+    hashtagList
+      .addEventListener(`click`, (evt) => {
+        if (evt.target.classList.contains(`card__hashtag-delete`)) {
+          evt.target.parentNode.remove();
+        }
+      });
   }
 }
 
