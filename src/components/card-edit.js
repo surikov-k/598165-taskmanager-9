@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 import AbstractComponent from './abstract-component';
 import {COLORS_LIST} from '../data';
 export default class CardEdit extends AbstractComponent {
@@ -5,7 +7,7 @@ export default class CardEdit extends AbstractComponent {
     super();
     this._description = description;
     this._dueDate = dueDate;
-    this._repeatingDays = repeatingDays;
+    this._repeatingDays = Object.assign({}, repeatingDays);
     this._tags = tags;
     this._color = color;
     this._isFavorite = isFavorite;
@@ -67,7 +69,7 @@ export default class CardEdit extends AbstractComponent {
 
                       placeholder="23 September"
                       name="date"
-                      value="${this._dueDate ? new Date(this._dueDate).toDateString() : ``}"
+                      value="${this._dueDate ? moment(this._dueDate).format(`DD MMMM`) : ``}"
                     />
                   </label>
                 </fieldset>
@@ -216,7 +218,7 @@ export default class CardEdit extends AbstractComponent {
       .addEventListener(`click`, (evt) => {
         if (evt.target.tagName === `INPUT`) {
 
-          [`black`, `yellow`, `blue`, `green`, `pink`]
+          COLORS_LIST
             .forEach((color) => {
               this.getElement()
                 .classList
@@ -255,8 +257,11 @@ export default class CardEdit extends AbstractComponent {
 
 
   _onRepeatToggleClick() {
-    const repeatStatus = this.getElement().querySelector(`.card__repeat-status`);
-    const repeatDaysFieldset = this.getElement().querySelector(`.card__repeat-days`);
+    const repeatStatus = this.getElement()
+      .querySelector(`.card__repeat-status`);
+
+    const repeatDaysFieldset = this.getElement()
+      .querySelector(`.card__repeat-days`);
 
     this.getElement()
       .querySelector(`.card__repeat-toggle`)
@@ -278,7 +283,6 @@ export default class CardEdit extends AbstractComponent {
                     .querySelector(`.card__date-status`);
                   const dateDeadlineFieldset = this.getElement()
                     .querySelector(`.card__date-deadline`);
-
 
                   dateStatus.innerText = `no`;
                   dateInput.value = ``;

@@ -1,3 +1,4 @@
+import moment from 'moment';
 import AbstractComponent from './abstract-component';
 export default class Card extends AbstractComponent {
   constructor({description, dueDate, repeatingDays, tags, color, isFavorite, isArchive}) {
@@ -83,11 +84,9 @@ export default class Card extends AbstractComponent {
 
     const dueDate = new Date(this._dueDate);
     return `<span class="card__date">
-            ${dueDate.toDateString()}
+              ${moment(dueDate).format(`DD MMMM`)}
             </span>
-            <span class="card__time">
-            ${dueDate.getHours() + `:` + dueDate.getMinutes()}
-            </span>`;
+            <span class="card__time"></span>`;
   }
 }
 

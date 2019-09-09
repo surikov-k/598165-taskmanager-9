@@ -58,6 +58,7 @@ export default class BoardConroller {
 
   _renderCard(data) {
     const cardController = new CardController(this._boardTasks, data, this._onDataChange, this._onViewChange);
+
     this._subscriptions.push(cardController.setDefaultView.bind(cardController));
   }
 

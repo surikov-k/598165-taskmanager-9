@@ -1,3 +1,7 @@
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import 'flatpickr/dist/themes/light.css';
+
 import Card from "../components/card";
 import CardEdit from "../components/card-edit";
 import {render} from "../utils";
@@ -6,56 +10,74 @@ export default class CardController {
   constructor(container, data, onDataChange, onViewChange) {
     this._container = container;
     this._data = data;
-    this._card = new Card(data);
-    this._cardEdit = new CardEdit(data);
+    this._card = new Card(this._data);
+    this._cardEdit = new CardEdit(this._data);
+
     this._onDataChange = onDataChange;
     this._onViewChange = onViewChange;
+    this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
 
     this.create();
   }
 
   create() {
-    const escKeyDownHandler = (evt) => {
-      if (evt.key === `Escape` || evt.key === `Esc`) {
-        this._container
-          .getElement()
-          .replaceChild(this._card.getElement(), this._cardEdit.getElement());
+    flatpickr(this._cardEdit.getElement().querySelector(`.card__date`), {
+      altInput: true,
+      allowImput: true,
+      defaultDate: this._data.dueDate,
+    });
 
-        this._cardEdit = new CardEdit(this._data);
+    this._subscribeOnCardEvents(this._card);
+    this._subscribeOnCardEditEvents(this._cardEdit);
 
-        document.removeEventListener(`keydown`, escKeyDownHandler);
-      }
-    };
+    render(this._container.getElement(), this._card.getElement());
+  }
 
-    this._card.getElement()
+  _subscribeOnCardEvents(card) {
+    card.getElement()
       .querySelector(`.card__btn--edit`)
       .addEventListener(`click`, (evt) => {
         evt.preventDefault();
         this._onViewChange();
         this._container
           .getElement()
-          .replaceChild(this._cardEdit.getElement(), this._card.getElement());
-        document.addEventListener(`keydown`, escKeyDownHandler);
+          .replaceChild(this._cardEdit.getElement(), card.getElement());
+        document.addEventListener(`keydown`, this._escKeyDownHandler);
       });
 
-    this._cardEdit.getElement()
+    card.getElement()
+      .querySelector(`.card__btn--favorites`)
+      .addEventListener(`click`, () => {
+        this._onFavoriteButtonClick();
+      });
+
+    card
+      .getElement()
+      .querySelector(`.card__btn--archive`)
+      .addEventListener(`click`, () => {
+        this._onArchiveButtonClick();
+      });
+  }
+
+  _subscribeOnCardEditEvents(cardEdit) {
+    cardEdit.getElement()
       .querySelector(`textarea`)
       .addEventListener(`focus`, () => {
-        document.removeEventListener(`keydown`, escKeyDownHandler);
+        document.removeEventListener(`keydown`, this._escKeyDownHandler);
       });
 
-    this._cardEdit.getElement()
+    cardEdit.getElement()
       .querySelector(`textarea`)
       .addEventListener(`blur`, () => {
-        document.addEventListener(`keydown`, escKeyDownHandler);
+        document.addEventListener(`keydown`, this._escKeyDownHandler);
       });
 
-    this._cardEdit.getElement()
+    cardEdit.getElement()
       .querySelector(`.card__save`)
       .addEventListener(`click`, (evt) => {
         evt.preventDefault();
 
-        const formData = new FormData(this._cardEdit.getElement().querySelector(`.card__form`));
+        const formData = new FormData(cardEdit.getElement().querySelector(`.card__form`));
 
         const entry = {
           description: formData.get(`text`),
@@ -74,37 +96,31 @@ export default class CardController {
 
         this._onDataChange(newData, this._data);
 
-        document.removeEventListener(`keydown`, escKeyDownHandler);
+        document.removeEventListener(`keydown`, this._escKeyDownHandler);
       });
 
-    this._card.getElement()
+    cardEdit.getElement()
       .querySelector(`.card__btn--favorites`)
       .addEventListener(`click`, () => {
         this._onFavoriteButtonClick();
       });
 
-    this._cardEdit.getElement()
-      .querySelector(`.card__btn--favorites`)
-      .addEventListener(`click`, () => {
-        this._onFavoriteButtonClick();
-      });
-
-    this._card
+    cardEdit
       .getElement()
       .querySelector(`.card__btn--archive`)
       .addEventListener(`click`, () => {
         this._onArchiveButtonClick();
       });
-
-    this._cardEdit
-      .getElement()
-      .querySelector(`.card__btn--archive`)
-      .addEventListener(`click`, () => {
-        this._onArchiveButtonClick();
-      });
-
-    render(this._container.getElement(), this._card.getElement());
   }
+
+  _escKeyDownHandler(evt) {
+    if (evt.key === `Escape` || evt.key === `Esc`) {
+      this._onViewChange();
+
+      document.removeEventListener(`keydown`, this._escKeyDownHandler);
+    }
+  }
+
 
   _onFavoriteButtonClick() {
     this._card.getElement()
@@ -141,6 +157,10 @@ export default class CardController {
   setDefaultView() {
     if (this._container.getElement().contains(this._cardEdit.getElement())) {
       this._container.getElement().replaceChild(this._card.getElement(), this._cardEdit.getElement());
+
+      this._cardEdit = new CardEdit(this._data);
+      this._subscribeOnCardEditEvents(this._cardEdit);
+
     }
   }
 }
